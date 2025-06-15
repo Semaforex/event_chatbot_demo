@@ -7,8 +7,8 @@ Provides a tool class to fetch details for a specific event by ID, compatible wi
 
 import requests
 from tools.base_tool import BaseTool
-from config import TICKETMASTER_API_KEY
 import json
+from env_config import get_ticketmaster_api_key
 
 BASE_URL = "https://app.ticketmaster.com/discovery/v2/events/{id}.json"
 
@@ -31,7 +31,7 @@ class TicketmasterEventDetailsAPI(BaseTool):
         if not event_id:
             return "Missing required parameter: id (event ID)."
         api_params = {
-            "apikey": TICKETMASTER_API_KEY
+            "apikey": get_ticketmaster_api_key()
         }
         url = BASE_URL.format(id=event_id)
         try:

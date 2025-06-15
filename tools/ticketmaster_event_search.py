@@ -7,8 +7,8 @@ Provides a tool class to search for events based on parameters, compatible with 
 
 import requests
 from tools.base_tool import BaseTool
-from config import TICKETMASTER_API_KEY
 import json
+from env_config import get_ticketmaster_api_key
 
 BASE_URL = "https://app.ticketmaster.com/discovery/v2/events.json"
 
@@ -28,7 +28,7 @@ class TicketmasterAPI(BaseTool):
             str: Summarized list of events or error message.
         """
         api_params = {
-            "apikey": TICKETMASTER_API_KEY,
+            "apikey": get_ticketmaster_api_key(),
         }
         if "countryCode" in params and params["countryCode"]:
             api_params["countryCode"] = params["countryCode"]
