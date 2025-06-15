@@ -1,0 +1,12 @@
+{
+    "type": "function",
+    "function": {
+        "name": "get_today_date",
+        "description": "Return today's date in ISO format (YYYY-MM-DD). No parameters required.",
+        "parameters": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+        }
+    }
+}

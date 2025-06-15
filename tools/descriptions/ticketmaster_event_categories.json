@@ -1,0 +1,32 @@
+{
+    "type": "function",
+    "function": {
+        "name": "get_ticketmaster_event_categories",
+        "description": "Query available event categories, genres, and subgenres from Ticketmaster's classification system. This tool helps find the exact names and IDs of event types that can be used for searching events. You can query by segment (broad category like 'Music', 'Sports'), genre (like 'Rock', 'Football'), or get all available options for refined event searches.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "enum": ["list_segments", "list_genres", "list_subgenres", "get_segment_id", "get_genre_id"],
+                    "description": "The type of category information to retrieve."
+                },
+                "segment": {
+                    "type": "string",
+                    "description": "Optional. A segment name (e.g., 'Music', 'Sports', 'Arts') to filter genres by, or to get the ID for."
+                },
+                "genre": {
+                    "type": "string",
+                    "description": "Optional. A genre name (e.g., 'Rock', 'Jazz', 'Football') to filter subgenres by, or to get the ID for."
+                },
+                "format": {
+                    "type": "string",
+                    "enum": ["list", "detailed"],
+                    "description": "Optional. The format of the response, either a simple list or detailed output with IDs. Default is 'list'."
+                }
+            },
+            "required": ["action"],
+            "additionalProperties": false
+        }
+    }
+}

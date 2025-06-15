@@ -1,0 +1,78 @@
+{
+    "type": "function",
+    "function": {
+        "name": "search_ticketmaster_events",
+        "description": "Search for live events using the Ticketmaster Discovery API (v2 /events endpoint). Find concerts, sports, arts, theater, and other events by a wide range of filters. You can search by keyword, location, date range, classification, and more. Returns a summarized list of matching events, including event name, date, time, venue, city, state, and a Ticketmaster URL. See https://developer.ticketmaster.com/products-and-docs/apis/discovery-api/v2/#search-events-v2 for full parameter details.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "keyword": {
+                    "type": "string",
+                    "description": "Search term for event name, artist, or venue."
+                },
+                "locale": {
+                    "type": "string",
+                    "description": "Language/locale code (e.g., en-us)."
+                },
+                "segmentId": {
+                    "type": "string",
+                    "description": "Event segment ID (e.g., KZFzniwnSyZfZ7v7nJ for Music)."
+                },
+                "segmentName": {
+                    "type": "string",
+                    "description": "Event segment name (e.g., music, sports)."
+                },
+                "city": {
+                    "type": "string",
+                    "description": "City to search in."
+                },
+                "stateCode": {
+                    "type": "string",
+                    "description": "State code (e.g., CA for California)."
+                },
+                "countryCode": {
+                    "type": "string",
+                    "description": "Country code (e.g., US, GB, DE)."
+                },
+                "postalCode": {
+                    "type": "string",
+                    "description": "Postal code to search in."
+                },
+                "startDateTime": {
+                    "type": "string",
+                    "description": "Start of date-time range (ISO-8601 UTC, e.g., 2025-05-10T00:00:00Z)."
+                },
+                "endDateTime": {
+                    "type": "string",
+                    "description": "End of date-time range (ISO-8601 UTC, e.g., 2025-05-20T23:59:59Z)."
+                },
+                "classificationName": {
+                    "type": "string",
+                    "description": "Event genre or type (e.g., rock, theater, sports)."
+                },
+                "radius": {
+                    "type": "number",
+                    "description": "Search radius around location."
+                },
+                "unit": {
+                    "type": "string",
+                    "enum": ["miles", "km"],
+                    "description": "Unit for radius (miles or km)."
+                },
+                "sort": {
+                    "type": "string",
+                    "description": "Sorting order (e.g., date, name, distance, relevance)."
+                },
+                "size": {
+                    "type": "integer",
+                    "description": "Number of results to return (deafult 5)."
+                },
+                "page": {
+                    "type": "integer",
+                    "description": "Page number for paginated results."
+                }
+            },
+            "additionalProperties": false
+        }
+    }
+}
