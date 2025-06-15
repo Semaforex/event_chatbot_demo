@@ -2,6 +2,11 @@ import streamlit as st
 from agents.event_agent import EventAgent
 from structs.context import Context
 from structs.message import Message
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv(override=True)
 
 st.set_page_config(page_title="Event Chat", page_icon=":speech_balloon:")
 

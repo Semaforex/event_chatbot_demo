@@ -9,7 +9,7 @@ import requests
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
-from config import SWAGGER_API_KEY
+from env_config import get_swagger_api_key
 
 BASE_URL = "https://event-search-staging.thrugo.com/api/events"
 
@@ -112,7 +112,7 @@ class EventSearchParams(BaseModel):
 class EventApiService:
     """Service for interacting with the event search API."""
     
-    def __init__(self, api_key: str = SWAGGER_API_KEY):
+    def __init__(self, api_key: str = get_swagger_api_key()):
         """Initialize the service with API key."""
         self.api_key = api_key
         self.base_url = BASE_URL
