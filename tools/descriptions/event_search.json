@@ -1,0 +1,41 @@
+{
+    "type": "function",
+    "function": {
+        "name": "search_events",
+        "description": "Finds a list of events based on filters. Returns event details including name, description, image, URL, start date/time, and venues.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "eventGenre": {
+                    "type": "string",
+                    "description": "Genre of the event (e.g., \"Sports - Football\")."
+                },
+                "eventLocationCity": {
+                    "type": "string",
+                    "description": "City where the event takes place (e.g., \"London\")."
+                },
+                "eventLocationCountryCode": {
+                    "type": "string",
+                    "description": "ISO country code of the event location (e.g., \"gb\")."
+                },
+                "eventStartDate": {
+                    "type": "string",
+                    "description": "Start date of the event in ISO format (yyyy-MM-dd)."
+                },
+                "eventEndDate": {
+                    "type": "string",
+                    "description": "End date of the event in ISO format (yyyy-MM-dd)."
+                },
+                "eventName": {
+                    "type": "string",
+                    "description": "Name of the event to search for."
+                },
+                "pageSize": {
+                    "type": "integer",
+                    "description": "Number of results per page (Min: 1, Max: 200, Default: 50)."
+                }
+            },
+            "additionalProperties": false
+        }
+    }
+}

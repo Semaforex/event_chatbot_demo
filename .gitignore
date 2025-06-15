@@ -17,6 +17,6 @@ venv/
 *.log
 *.sqlite3
 *.db
-./config.py
+config.py
 
 **/__pycache__/

@@ -1,0 +1,18 @@
+{
+    "type": "function",
+    "function": {
+        "name": "get_event_referral",
+        "description": "Retrieves a referral URL for a specified event and redirects to this URL. Use this to generate referral links for events.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "eventUrl": {
+                    "type": "string",
+                    "description": "The URL of the event for which the referral is requested."
+                }
+            },
+            "required": ["eventUrl"],
+            "additionalProperties": false
+        }
+    }
+}

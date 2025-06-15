@@ -1,0 +1,60 @@
+{
+    "type": "function",
+    "function": {
+        "name": "get_event_details",
+        "description": "Fetches detailed information about a specific event by its ID. Returns comprehensive event data including name, description, image, URL, start date/time, and venue information.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "eventId": {
+                    "type": "string",
+                    "description": "The unique identifier of the event to retrieve details for."
+                }
+            },
+            "required": ["eventId"],
+            "additionalProperties": false
+        },
+        "returns": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique identifier for the event."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "The name or title of the event."
+                },
+                "image": {
+                    "type": "string",
+                    "description": "URL to the event's promotional image."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Detailed description of the event."
+                },
+                "url": {
+                    "type": "string",
+                    "description": "URL to the event's webpage or ticket purchase page."
+                },
+                "startDateTime": {
+                    "type": "string",
+                    "description": "Start date and time of the event."
+                },
+                "venues": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "description": "Name of the venue where the event takes place."
+                            }
+                        }
+                    },
+                    "description": "List of venues associated with the event."
+                }
+            }
+        }
+    }
+}
