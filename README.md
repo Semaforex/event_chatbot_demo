@@ -16,9 +16,12 @@ This application requires several API keys to function properly. These keys are 
 2. Edit the `.env` file and add your API keys:
    ```
    OPENAI_API_KEY=your_openai_api_key_here
+   OPENAI_MODERATION_API_KEY=your_moderation_api_key_here
    TICKETMASTER_API_KEY=your_ticketmaster_api_key_here
    SWAGGER_API_KEY=your_swagger_api_key_here
    ```
+   
+   Note: The `OPENAI_MODERATION_API_KEY` is optional. If not provided, the system will use the `OPENAI_API_KEY` for moderation.
 
 3. Load the environment variables:
 
@@ -53,3 +56,24 @@ pip install -r requirements.txt
 ```bash
 streamlit run main.py
 ```
+
+## Content Moderation
+
+This application uses OpenAI's Moderation API to ensure user inputs and assistant responses comply with content policies. The moderation service:
+
+- Automatically filters inappropriate or harmful user inputs
+- Prevents the assistant from generating problematic content
+- Provides detailed moderation insights for administrators through the sidebar debug panel
+
+### Moderation Categories
+
+The OpenAI Moderation API checks content across multiple categories including:
+
+- Hate speech
+- Harassment
+- Self-harm
+- Sexual content
+- Violence
+- etc.
+
+When content is flagged, the user will receive an appropriate message indicating that their request cannot be processed.
