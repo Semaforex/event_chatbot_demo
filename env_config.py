@@ -42,3 +42,20 @@ def get_openai_api_key() -> Optional[str]:
         api_key = CONFIG["OPENAI_API_KEY"]
         warnings.warn("Using OPENAI_API_KEY from config.py instead of environment variable", UserWarning)
     return api_key
+
+def get_moderation_api_key() -> Optional[str]:
+    """
+    Get the OpenAI Moderation API key from environment variables or config.
+    By default, this uses the same API key as the OpenAI API.
+    """
+    # First try a dedicated moderation API key if available
+    api_key = os.environ.get("OPENAI_MODERATION_API_KEY")
+    if not api_key and "OPENAI_MODERATION_API_KEY" in CONFIG:
+        api_key = CONFIG["OPENAI_MODERATION_API_KEY"]
+        warnings.warn("Using OPENAI_MODERATION_API_KEY from config.py instead of environment variable", UserWarning)
+    
+    # Fall back to the standard OpenAI API key
+    if not api_key:
+        api_key = get_openai_api_key()
+    
+    return api_key
