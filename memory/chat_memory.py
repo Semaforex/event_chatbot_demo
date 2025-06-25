@@ -2,14 +2,12 @@ from typing import Dict, Any, List, Optional
 from memory.base_memory import BaseMemory
 from structs.message import Message
 from datetime import datetime
-from tools.today_date import TodayDateTool
 import json
 
 class ChatMemory(BaseMemory):
     def __init__(self):
         self.messages: List[Message] = []
-        today_date = TodayDateTool().run({})
-        self.summary = f"Today's date: {today_date}.\nNo summary available."
+        self.summary: str = "No summary available."
     
 
     def add_message(self, message: Message, response: str) -> None:

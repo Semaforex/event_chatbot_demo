@@ -1,0 +1,2 @@
+mongo zamiast session (input usera i channel id)
+data w prompcie

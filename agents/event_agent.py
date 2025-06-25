@@ -20,10 +20,12 @@ class EventAgent(BaseAgent):
             self.client = OpenAI(api_key=api_key)
         else:
             self.client = OpenAI()
+        today_date = TodayDateTool().run({})
+        date_msg = f"Today's date: {today_date}.\n"
         system_prompt_path = Path(__file__).parent / "system_prompts" / "event_agent.txt"
         self.system_prompt = Message(
             role="system",
-            content=system_prompt_path.read_text()
+            content=date_msg+system_prompt_path.read_text()
         )
         
         # Initialize memory components
@@ -44,10 +46,11 @@ class EventAgent(BaseAgent):
         context.add_message(message)
         
         memory_summary = self.memory.get_summary()
-        print(f"Memory Summary: {memory_summary}")
+        today_date = TodayDateTool().run({})
+        date_msg = f"Today's date: {today_date}.\n"
         enhanced_system_prompt = Message(
             role="system",
-            content=self.system_prompt.content + "\n\n" + 
+            content=date_msg+self.system_prompt.content + "\n\n" + 
                     "--- MEMORY SUMMARY ---\n" + 
                     memory_summary + "\n"
         )
