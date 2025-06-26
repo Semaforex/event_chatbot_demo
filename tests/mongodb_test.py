@@ -35,7 +35,7 @@ def connect_to_mongodb():
 
 def generate_sample_session():
     """Generate a sample chat session with imaginary data."""
-    session_id = str(uuid.uuid4())
+    channel_id = str(uuid.uuid4())
     
     # Random session duration between 1-60 minutes
     duration_minutes = random.randint(1, 60)
@@ -67,14 +67,13 @@ def generate_sample_session():
     conversation = random.choice(sample_conversations)
     
     session_data = {
-        "session_id": session_id,
-        "user_id": f"user_{random.randint(1000, 9999)}",
+        "channel_id": channel_id,
         "start_time": start_time,
         "end_time": end_time,
         "duration_minutes": duration_minutes,
         "messages": conversation,
         "total_messages": len(conversation),
-        "user_location": random.choice(["New York", "Los Angeles", "Chicago", "Miami", "Seattle"]),
+        "location": random.choice(["New York", "Los Angeles", "Chicago", "Miami", "Seattle"]),
         "event_searches_performed": random.randint(1, 5),
         "events_found": random.randint(0, 15),
         "session_outcome": random.choice(["completed", "abandoned", "escalated"]),
@@ -117,12 +116,11 @@ def query_sessions(collection, limit=5):
         
         for i, session in enumerate(sessions, 1):
             print(f"\n--- Session {i} ---")
-            print(f"Session ID: {session['session_id']}")
-            print(f"User ID: {session['user_id']}")
+            print(f"Channel ID: {session['channel_id']}")
             print(f"Start Time: {session['start_time']}")
             print(f"Duration: {session['duration_minutes']} minutes")
             print(f"Messages: {session['total_messages']}")
-            print(f"Location: {session['user_location']}")
+            print(f"Location: {session['location']}")
             print(f"Outcome: {session['session_outcome']}")
             print(f"Satisfaction: {session['user_satisfaction']}/5")
         

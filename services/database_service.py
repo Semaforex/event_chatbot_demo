@@ -78,12 +78,12 @@ class DatabaseService:
             logger.error(f"Failed to save chat session: {e}")
             return None
     
-    def get_chat_session(self, session_id: str) -> Optional[Dict[str, Any]]:
+    def get_chat_session(self, channel_id: str) -> Optional[Dict[str, Any]]:
         """
-        Retrieve a chat session by session ID.
+        Retrieve a chat session by channel ID.
         
         Args:
-            session_id: The session ID to search for
+            channel_id: The channel ID to search for
             
         Returns:
             The session document or None if not found
@@ -93,45 +93,19 @@ class DatabaseService:
                 logger.error("Not connected to database")
                 return None
             
-            session = self.chat_sessions.find_one({"session_id": session_id})
+            session = self.chat_sessions.find_one({"channel_id": channel_id})
             return session
             
         except Exception as e:
             logger.error(f"Failed to retrieve chat session: {e}")
             return None
     
-    def get_user_sessions(self, user_id: str, limit: int = 10) -> List[Dict[str, Any]]:
-        """
-        Get chat sessions for a specific user.
-        
-        Args:
-            user_id: The user ID to search for
-            limit: Maximum number of sessions to return
-            
-        Returns:
-            List of session documents
-        """
-        try:
-            if self.chat_sessions is None:
-                logger.error("Not connected to database")
-                return []
-            
-            sessions = list(self.chat_sessions.find(
-                {"user_id": user_id}
-            ).sort("created_at", -1).limit(limit))
-            
-            return sessions
-            
-        except Exception as e:
-            logger.error(f"Failed to retrieve user sessions: {e}")
-            return []
-    
-    def update_session(self, session_id: str, update_data: Dict[str, Any]) -> bool:
+    def update_session(self, channel_id: str, update_data: Dict[str, Any]) -> bool:
         """
         Update an existing chat session.
         
         Args:
-            session_id: The session ID to update
+            channel_id: The channel ID to update
             update_data: Dictionary containing fields to update
             
         Returns:
@@ -146,15 +120,15 @@ class DatabaseService:
             update_data['updated_at'] = datetime.now()
             
             result = self.chat_sessions.update_one(
-                {"session_id": session_id},
+                {"channel_id": channel_id},
                 {"$set": update_data}
             )
             
             success = result.modified_count > 0
             if success:
-                logger.info(f"Session {session_id} updated successfully")
+                logger.info(f"Channel {channel_id} updated successfully")
             else:
-                logger.warning(f"No session found with ID: {session_id}")
+                logger.warning(f"No channel found with ID: {channel_id}")
                 
             return success
             
@@ -240,10 +214,9 @@ def example_usage():
     # Using context manager (recommended)
     try:
         with DatabaseContext() as db:
-            # Save a session
-            session_data = {
-                "session_id": "example_session_123",
-                "user_id": "user_456",
+            # Save a channel
+            channel_data = {
+                "channel_id": "example_channel_123",
                 "messages": [
                     {"role": "user", "content": "Hello"},
                     {"role": "assistant", "content": "Hi there!"}
@@ -252,16 +225,16 @@ def example_usage():
                 "event_searches": 2
             }
             
-            session_id = db.save_chat_session(session_data)
-            print(f"Saved session: {session_id}")
+            doc_id = db.save_chat_session(channel_data)
+            print(f"Saved channel: {doc_id}")
             
             # Get session stats
             stats = db.get_session_stats()
             print(f"Database stats: {stats}")
             
-            # Get all sessions
-            all_sessions = db.get_all_sessions()
-            print(f"All sessions: {all_sessions}")
+            # Get all channels
+            all_channels = db.get_all_sessions()
+            print(f"All channels: {len(all_channels)}")
             
     except Exception as e:
         print(f"Database operation failed: {e}")

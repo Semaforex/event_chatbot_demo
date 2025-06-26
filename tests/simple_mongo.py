@@ -20,8 +20,7 @@ def simple_insert():
         
         # Create a simple document
         document = {
-            "session_id": str(uuid.uuid4()),
-            "user_id": "test_user_123",
+            "channel_id": str(uuid.uuid4()),
             "message": "Hello from Python script!",
             "timestamp": datetime.now(),
             "test_run": True

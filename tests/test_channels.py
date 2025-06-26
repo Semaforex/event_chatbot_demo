@@ -21,8 +21,7 @@ def test_channel_system():
                 channel_id = f"channel_{uuid.uuid4().hex[:8]}"
                 
                 channel_data = {
-                    "session_id": channel_id,  # Using session_id field for channel_id
-                    "channel_id": channel_id,  # Keep both for clarity
+                    "channel_id": channel_id,
                     "messages": [
                         {"role": "user", "content": f"Hello from channel {i+1}"},
                         {"role": "assistant", "content": f"Welcome to channel {i+1}! How can I help you with events today?"}
@@ -46,7 +45,7 @@ def test_channel_system():
             
             print(f"📚 Found {len(all_channels)} channels:")
             for i, channel in enumerate(all_channels, 1):
-                channel_id = channel.get('session_id', channel.get('channel_id', 'Unknown'))
+                channel_id = channel.get('channel_id', 'Unknown')
                 message_count = channel.get('message_count', len(channel.get('messages', [])))
                 created_at = channel.get('created_at', 'Unknown')
                 print(f"  {i}. {channel_id} - {message_count} messages ({created_at})")
@@ -59,7 +58,7 @@ def test_channel_system():
                 
                 if channel_data:
                     print(f"✅ Channel loaded successfully!")
-                    print(f"   - Channel ID: {channel_data.get('session_id', channel_data.get('channel_id'))}")
+                    print(f"   - Channel ID: {channel_data.get('channel_id')}")
                     print(f"   - Messages: {len(channel_data.get('messages', []))}")
                     print(f"   - Created: {channel_data['created_at']}")
                     
@@ -128,7 +127,7 @@ def test_channel_filtering():
             if all_channels:
                 print(f"📋 All Channels (sorted by last updated):")
                 for i, channel in enumerate(all_channels, 1):
-                    channel_id = channel.get('session_id', channel.get('channel_id', 'Unknown'))
+                    channel_id = channel.get('channel_id', 'Unknown')
                     last_updated = channel.get('last_updated', channel.get('created_at', 'Unknown'))
                     message_count = channel.get('message_count', 0)
                     status = channel.get('status', 'unknown')

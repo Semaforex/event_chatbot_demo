@@ -82,7 +82,7 @@ def load_all_channels():
         channel_list = []
         for channel in channels:
             channel_info = {
-                "channel_id": channel.get("session_id", channel.get("channel_id", "unknown")),
+                "channel_id": channel.get("channel_id", "unknown"),
                 "created_at": channel.get("created_at"),
                 "last_updated": channel.get("last_updated", channel.get("created_at")),
                 "message_count": channel.get("message_count", len(channel.get("messages", []))),
@@ -105,8 +105,7 @@ def create_new_channel():
     
     # Save empty channel to database
     channel_data = {
-        "session_id": channel_id,  # Using session_id field for channel_id
-        "channel_id": channel_id,  # Keep both for clarity
+        "channel_id": channel_id,
         "messages": [],
         "created_at": datetime.now(),
         "last_updated": datetime.now(),
