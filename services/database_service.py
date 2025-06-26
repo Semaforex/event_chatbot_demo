@@ -194,6 +194,28 @@ class DatabaseService:
         except Exception as e:
             logger.error(f"Failed to get session stats: {e}")
             return {}
+    
+    def get_all_sessions(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """
+        Get all chat sessions/channels from the database.
+        
+        Args:
+            limit: Maximum number of sessions to return
+            
+        Returns:
+            List of session documents sorted by last_updated
+        """
+        try:
+            if self.chat_sessions is None:
+                logger.error("Not connected to database")
+                return []
+            
+            sessions = list(self.chat_sessions.find({}).sort("last_updated", -1).limit(limit))
+            return sessions
+            
+        except Exception as e:
+            logger.error(f"Failed to retrieve all sessions: {e}")
+            return []
 
 # Context manager for easy database operations
 class DatabaseContext:
@@ -236,6 +258,10 @@ def example_usage():
             # Get session stats
             stats = db.get_session_stats()
             print(f"Database stats: {stats}")
+            
+            # Get all sessions
+            all_sessions = db.get_all_sessions()
+            print(f"All sessions: {all_sessions}")
             
     except Exception as e:
         print(f"Database operation failed: {e}")
