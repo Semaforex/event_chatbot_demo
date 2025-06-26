@@ -12,7 +12,7 @@ class BaseTool(ABC):
         raise NotImplementedError("Subclasses should implement this method.")
     
     @abstractmethod
-    def run(self, params) -> str:
+    def run(self, params):
         """
         Run the tool with the given parameters.
         """

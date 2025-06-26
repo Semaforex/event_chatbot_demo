@@ -3,7 +3,6 @@ from openai import OpenAI
 from typing import Dict, Any, Optional
 from structs.context import Context
 from structs.message import Message
-from tools.ticketmaster_event_search import TicketmasterAPI
 from tools.event_categories import EventCategoriesAPI
 from tools.event_details import TicketmasterEventDetailsAPI
 from tools.event_search import EventSearchAPI
@@ -11,7 +10,9 @@ from agents.memory_agent import MemoryAgent
 from tools.today_date import TodayDateTool
 from memory.chat_memory import ChatMemory
 from pathlib import Path
+from services.event_api_service import format_events_for_llm, EventSearchResponse
 import json
+import re
 
 class EventAgent(BaseAgent):
     def __init__(self, api_key: Optional[str] = None):
@@ -43,6 +44,7 @@ class EventAgent(BaseAgent):
         self.memory_agent = MemoryAgent()
 
     def process(self, message: Message, context: Context) -> Dict[str, Any]:
+        events_found = []
         context.add_message(message)
         
         memory_summary = self.memory.get_summary()
@@ -98,6 +100,15 @@ class EventAgent(BaseAgent):
                 )
                 args = json.loads(tool_call.function.arguments)
                 result = self.tools[tool_call.function.name].run(args)
+                if isinstance(result, str):
+                    result = {"message": result}
+                elif isinstance(result, EventSearchResponse):
+                    if len(events_found) == 0:
+                        events_found = result.events
+                    else:
+                        events_found.extend(result.events)
+                    result = {"events": format_events_for_llm(result)}
+                    
                 context.add_message(
                     Message(
                         role="tool",
@@ -118,17 +129,36 @@ class EventAgent(BaseAgent):
             )
             assistant_message = completion.choices[0].message
 
-        assistant_response = assistant_message.content if assistant_message.content else ""
+        # Parse the assistant response as JSON according to system prompt format
+        try:
+            assistant_response_dict = json.loads(assistant_message.content) if assistant_message.content else {"resp": ' ', "ids": []}
+        except (json.JSONDecodeError, TypeError):
+            # Fallback if response is not in expected JSON format
+            assistant_response_dict = {"resp": assistant_message.content or ' ', "ids": []}
+        
+        # Extract response text and IDs from the parsed dictionary
+        response = assistant_response_dict.get("resp", ' ')
+        ids_list = assistant_response_dict.get("ids", [])
+        
+        # Ensure ids_list is actually a list
+        if not isinstance(ids_list, list):
+            ids_list = []
+        
         context.add_message(
             Message(
                 role="assistant",
-                content=assistant_response
+                content=response
             )
         )
         
         # Update memory with the user message and assistant response
-        self.memory.add_message(message, assistant_response)
+        self.memory.add_message(message, response)
         # Update memory summary
         self.memory.update_summary(self.memory_agent.summarize_memory(self.memory))
         
-        return {"context": context, "response": assistant_response}
+        print(f"IDs extracted from response: {ids_list}")
+        # Filter events_found to only include events whose id is in ids_list
+        if ids_list and events_found:
+            events_found = [event for event in events_found if getattr(event, "id", None) in ids_list]
+        print(f"Events found after filtering: {events_found}")
+        return {"context": context, "response": response, "events_found": events_found}

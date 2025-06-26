@@ -279,25 +279,25 @@ class EventApiService:
         print(events_data)
         return events_data
     
-    def format_events_for_llm(self, events_response: EventSearchResponse) -> str:
-        """
-        Format the events data in a way that's suitable for an LLM.
+def format_events_for_llm(events_response: EventSearchResponse) -> str:
+    """
+    Format the events data in a way that's suitable for an LLM.
+    
+    Args:
+        events_response: The structured event search response
         
-        Args:
-            events_response: The structured event search response
-            
-        Returns:
-            str: Formatted string representation of events
-        """
-        if not events_response.events:
-            return "No events found for the given criteria."
-        
-        formatted_events = [event.format_summary() for event in events_response.events]
-        
-        result = f"Found {events_response.total_count} events. Showing {len(formatted_events)}:"
-        if events_response.found_more_events:
-            result += " (more events are available)"
-        result += "\n\n"
-        result += "\n".join(formatted_events)
-        
-        return result
+    Returns:
+        str: Formatted string representation of events
+    """
+    if not events_response.events:
+        return "No events found for the given criteria."
+    
+    formatted_events = [event.format_summary() for event in events_response.events]
+    
+    result = f"Found {events_response.total_count} events. Showing {len(formatted_events)}:"
+    if events_response.found_more_events:
+        result += " (more events are available)"
+    result += "\n\n"
+    result += "\n".join(formatted_events)
+    
+    return result

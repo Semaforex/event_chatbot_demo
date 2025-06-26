@@ -6,6 +6,7 @@ from services.moderation_service import ModerationService
 from dotenv import load_dotenv
 import os
 import logging
+import re
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -33,6 +34,45 @@ if "moderation_service" not in st.session_state:
     except Exception as e:
         logger.error(f"Failed to initialize moderation service: {e}")
         st.session_state.moderation_service = None
+
+def format_events_display(events):
+    """Format events for display with nice borders and formatting."""
+    if not events:
+        return ""
+    
+    formatted_events = []
+    for i, event in enumerate(events, 1):
+        # Format venue information
+        venue_info = "Venue not specified"
+        if event.venues and len(event.venues) > 0:
+            venue = event.venues[0]
+            venue_parts = [venue.name]
+            if venue.city:
+                venue_parts.append(venue.city)
+            if venue.country:
+                venue_parts.append(venue.country)
+            venue_info = ", ".join(venue_parts)
+        
+        # Format date and time
+        date_time = event.dates.start_date
+        if event.dates.start_time:
+            date_time += f" at {event.dates.start_time}"
+        
+        # Create the event card with border
+        event_card = f"""
+**Event {i}** \n
+📅 **{event.name}** \n
+📍 **Venue:** {venue_info} \n
+🕒 **Date & Time:** {date_time} \n
+"""
+        if event.url:
+            event_card += f"🔗 **More Info:** [Link]({event.url}) \n"
+        if event.description:
+            event_card += f"📝 **Description:** {event.description} \n"
+        
+        formatted_events.append(event_card)
+    
+    return "\n" + "─" * 50 + "\n" + "\n─────────────────────────────────────────────────\n".join(formatted_events) + "\n" + "─" * 50
 
 def send_message():
     user_input = st.session_state.user_input.strip()
@@ -66,6 +106,7 @@ def send_message():
     result = st.session_state.agent.process(user_message, st.session_state.context)
     st.session_state.context = result["context"]
     response = result["response"]
+    events_found = result.get("events_found", [])
     
     # Optionally check the response with moderation API as well
     response_flagged = False
@@ -79,7 +120,12 @@ def send_message():
             logger.error(f"Error during response moderation: {e}")
     
     st.session_state.chat_history.append(("You", user_input))
-    st.session_state.chat_history.append(("Assistant", response))
+    
+    # Format events nicely if any were found
+    events_display = format_events_display(events_found) if events_found else ""
+    assistant_message = response + events_display
+    
+    st.session_state.chat_history.append(("Assistant", assistant_message))
     st.session_state.user_input = ""
 
 st.text_input("You:", key="user_input", on_change=send_message)

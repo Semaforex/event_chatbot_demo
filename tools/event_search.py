@@ -1,7 +1,9 @@
 from tools.base_tool import BaseTool
 import json
 from typing import Dict, Any
-from services.event_api_service import EventApiService, EventSearchParams
+from services.event_api_service import EventApiService, EventSearchParams, EventSearchResponse
+from typing import Optional
+
 
 class EventSearchAPI(BaseTool):
     def __init__(self):
@@ -12,7 +14,7 @@ class EventSearchAPI(BaseTool):
     def get_description(self) -> str:
         return self.tool_description["function"]["description"]
 
-    def run(self, params: Dict[str, Any]) -> str:
+    def run(self, params: Dict[str, Any]) -> Optional[EventSearchResponse]:
         """
         Run the event search with the given parameters.
         Args:
@@ -32,9 +34,7 @@ class EventSearchAPI(BaseTool):
             events_response = self.event_service.search_events(search_params)
             
             # Format the response for LLM
-            return self.event_service.format_events_for_llm(events_response)
+            return events_response
             
-        except ValueError as e:
-            return f"Error: {str(e)}"
         except Exception as e:
-            return f"Unexpected error: {str(e)}"
+            return None
