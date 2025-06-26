@@ -60,15 +60,15 @@ def format_events_display(events):
         
         # Create the event card with border
         event_card = f"""
-**Event {i}** \n
-📅 **{event.name}** \n
-📍 **Venue:** {venue_info} \n
-🕒 **Date & Time:** {date_time} \n
+**Event {i}**
+📅 **{event.name}**
+📍 **Venue:** {venue_info}
+🕒 **Date & Time:** {date_time}
+🔗 **URL:** [View Event]({event.url})
 """
-        if event.url:
-            event_card += f"🔗 **More Info:** [Link]({event.url}) \n"
+        
         if event.description:
-            event_card += f"📝 **Description:** {event.description} \n"
+            event_card += f"📝 **Description:** {event.description}\n"
         
         formatted_events.append(event_card)
     
@@ -123,6 +123,12 @@ def send_message():
     
     # Format events nicely if any were found
     events_display = format_events_display(events_found) if events_found else ""
+    
+    # Combine response text with formatted events (ensure response is clean text)
+    if isinstance(response, dict):
+        # If response is still a dict, extract the text part
+        response = response.get("resp", str(response))
+    
     assistant_message = response + events_display
     
     st.session_state.chat_history.append(("Assistant", assistant_message))
