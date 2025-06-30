@@ -59,7 +59,7 @@ class DatabaseService:
             session_data: Dictionary containing session information
             
         Returns:
-            The inserted document ID as string, or None if failed
+            The upserted document ID as string, or None if failed
         """
         try:
             if self.chat_sessions is None:
@@ -70,9 +70,29 @@ class DatabaseService:
             if 'created_at' not in session_data:
                 session_data['created_at'] = datetime.now()
             
-            result = self.chat_sessions.insert_one(session_data)
-            logger.info(f"Chat session saved with ID: {result.inserted_id}")
-            return str(result.inserted_id)
+            # Use channel_id as the unique identifier for upsert
+            channel_id = session_data.get('channel_id')
+            if not channel_id:
+                logger.error("channel_id is required for upsert operation")
+                return None
+            
+            result = self.chat_sessions.update_one(
+                {"channel_id": channel_id},
+                {"$set": session_data},
+                upsert=True
+            )
+            
+            # Get the document ID (either inserted or existing)
+            if result.upserted_id:
+                doc_id = str(result.upserted_id)
+                logger.info(f"Chat session inserted with ID: {doc_id}")
+            else:
+                # Find the existing document to get its ID
+                existing_doc = self.chat_sessions.find_one({"channel_id": channel_id})
+                doc_id = str(existing_doc['_id']) if existing_doc else None
+                logger.info(f"Chat session updated for channel: {channel_id}")
+            
+            return doc_id
             
         except Exception as e:
             logger.error(f"Failed to save chat session: {e}")
@@ -119,16 +139,20 @@ class DatabaseService:
             # Add update timestamp
             update_data['updated_at'] = datetime.now()
             
-            result = self.chat_sessions.update_one( # upsert true
+            result = self.chat_sessions.update_one(
                 {"channel_id": channel_id},
-                {"$set": update_data}
+                {"$set": update_data},
+                upsert=True
             )
             
-            success = result.modified_count > 0
+            success = result.modified_count > 0 or result.upserted_id is not None
             if success:
-                logger.info(f"Channel {channel_id} updated successfully")
+                if result.upserted_id:
+                    logger.info(f"Channel {channel_id} created successfully")
+                else:
+                    logger.info(f"Channel {channel_id} updated successfully")
             else:
-                logger.warning(f"No channel found with ID: {channel_id}")
+                logger.warning(f"No changes made to channel: {channel_id}")
                 
             return success
             
