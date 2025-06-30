@@ -266,9 +266,19 @@ def send_message():
     # Process message normally if not flagged
     user_message = Message(role="user", content=user_input)
     result = st.session_state.agent.process(user_message, st.session_state.context)
+    
+    # Log the complete return object from event_agent.process
+    logger.info(f"Event agent return object: {json.dumps({
+        'response': result.get('response', ''),
+        'events_found_count': len(result.get('events_found', [])),
+        'search_params': result.get('search_params', []),
+        'context_message_count': len(result.get('context', Context()).messages) if result.get('context') else 0
+    }, indent=2)}")
+    
     st.session_state.context = result["context"]
     response = result["response"]
     events_found = result.get("events_found", [])
+    search_params = result.get("search_params", [])
     
     # Optionally check the response with moderation API as well
     response_flagged = False
@@ -282,6 +292,16 @@ def send_message():
             logger.error(f"Error during response moderation: {e}")
     
     st.session_state.chat_history.append(("You", user_input))
+    
+    # Log search parameters if any were used
+    if search_params:
+        logger.info(f"Search parameters used: {json.dumps(search_params, indent=2)}")
+    
+    # Log events found details
+    if events_found:
+        logger.info(f"Events found details: {len(events_found)} events")
+        for i, event in enumerate(events_found):
+            logger.info(f"Event {i+1}: {getattr(event, 'name', 'Unknown')} - ID: {getattr(event, 'id', 'No ID')}")
     
     # Format events nicely if any were found
     events_display = format_events_display(events_found) if events_found else ""

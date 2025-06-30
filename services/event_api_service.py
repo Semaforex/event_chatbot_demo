@@ -103,10 +103,10 @@ class EventSearchParams(BaseModel):
     @classmethod
     def validate_page_size(cls, v):
         if v is not None:
-            if v < 1:
-                return 1
-            if v > 200:
-                return 200
+            if v < 4:
+                return 4
+            if v > 20:
+                return 20
         return v
 
 class EventApiService:

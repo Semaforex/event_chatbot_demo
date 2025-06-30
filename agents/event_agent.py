@@ -72,9 +72,8 @@ class EventAgent(BaseAgent):
             self.memory.add_message(message, "Error processing request.")
             self.memory.update_summary(self.memory_agent.summarize_memory(self.memory))
             return {"context": context, "response": "Error processing request."}
-
+        return_objects = []
         if hasattr(assistant_message, 'tool_calls') and assistant_message.tool_calls:
-            # lista obiektow z paramettrami wyszukiwania i flagami
             for tool_call in assistant_message.tool_calls:
                 context.add_message(
                     Message(
@@ -100,6 +99,8 @@ class EventAgent(BaseAgent):
                     if len(events_found) == 0:
                         events_found = result.events
                     else:
+                        return_object = {"params": getattr(tool_call.function, "arguments", ""), "found_more": len(events_found) > 3}
+                        return_objects.append(return_object)
                         events_found.extend(result.events)
                     result = {"events": format_events_for_llm(result)}
                     # appent listy obiektow 
@@ -155,4 +156,6 @@ class EventAgent(BaseAgent):
         if ids_list and events_found:
             events_found = [event for event in events_found if getattr(event, "id", None) in ids_list]
         print(f"Events found after filtering: {events_found}")
-        return {"context": context, "response": response, "events_found": events_found}
+        if len(return_objects) == 0:
+            return {"context": context, "response": response, "events_found": [], "search_params": []}
+        return {"context": context, "response": response, "events_found": events_found, "search_params": return_objects}

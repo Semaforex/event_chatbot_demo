@@ -32,7 +32,7 @@
                 },
                 "pageSize": {
                     "type": "integer",
-                    "description": "Number of results per page (Min: 1, Max: 200, Default: 50)."
+                    "description": "Number of results per page (Min: 4, Max: 20, Default: 3)."
                 }
             },
             "additionalProperties": false
