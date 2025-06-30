@@ -1,2 +1,6 @@
-mongo zamiast session (input usera i channel id)
-data w prompcie
+mongo update zamiast insert
+chat min 3 eventy ale sprawdzamy i flaga
+structured output + walidacja
+zestaw parametrów wyszukania i flaga w zwrotce (trzeba sprawdzi flage)
+obiekt ktory ma parametry wyszukiwania i flagi. zwracamy kilka obiektow w liscie
+przechowywanie raw odpowiedzi llma {events_found, obiekt z wyzej}

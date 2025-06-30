@@ -3,8 +3,6 @@ from openai import OpenAI
 from typing import Dict, Any, Optional
 from structs.context import Context
 from structs.message import Message
-from tools.event_categories import EventCategoriesAPI
-from tools.event_details import TicketmasterEventDetailsAPI
 from tools.event_search import EventSearchAPI
 from agents.memory_agent import MemoryAgent
 from tools.today_date import TodayDateTool
@@ -32,13 +30,8 @@ class EventAgent(BaseAgent):
         # Initialize memory components
         self.memory = ChatMemory()        
         # Initialize tools
-        event_categories_tool = EventCategoriesAPI()
-        event_details_tool = TicketmasterEventDetailsAPI()
         event_search_tool = EventSearchAPI()
         self.tools = {
-            # 'search_ticketmaster_events': event_search_tool,
-            # 'get_ticketmaster_event_categories': event_categories_tool,
-            # 'get_ticketmaster_event_details': event_details_tool,
             'search_events': event_search_tool,
         }
         self.memory_agent = MemoryAgent()
@@ -81,6 +74,7 @@ class EventAgent(BaseAgent):
             return {"context": context, "response": "Error processing request."}
 
         if hasattr(assistant_message, 'tool_calls') and assistant_message.tool_calls:
+            # lista obiektow z paramettrami wyszukiwania i flagami
             for tool_call in assistant_message.tool_calls:
                 context.add_message(
                     Message(
@@ -108,7 +102,7 @@ class EventAgent(BaseAgent):
                     else:
                         events_found.extend(result.events)
                     result = {"events": format_events_for_llm(result)}
-                    
+                    # appent listy obiektow 
                 context.add_message(
                     Message(
                         role="tool",

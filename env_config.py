@@ -15,15 +15,7 @@ try:
 except ImportError:
     pass
 
-def get_ticketmaster_api_key() -> str:
-    """Get the Ticketmaster API key from environment variables or config."""
-    api_key = os.environ.get("TICKETMASTER_API_KEY")
-    if not api_key and "TICKETMASTER_API_KEY" in CONFIG:
-        api_key = CONFIG["TICKETMASTER_API_KEY"]
-        warnings.warn("Using TICKETMASTER_API_KEY from config.py instead of environment variable", UserWarning)
-    if not api_key:
-        raise EnvironmentError("TICKETMASTER_API_KEY not found in environment variables or config.py")
-    return api_key
+
 
 def get_swagger_api_key() -> str:
     """Get the Swagger API key from environment variables or config."""

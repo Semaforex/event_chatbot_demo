@@ -119,7 +119,7 @@ class DatabaseService:
             # Add update timestamp
             update_data['updated_at'] = datetime.now()
             
-            result = self.chat_sessions.update_one(
+            result = self.chat_sessions.update_one( # upsert true
                 {"channel_id": channel_id},
                 {"$set": update_data}
             )
