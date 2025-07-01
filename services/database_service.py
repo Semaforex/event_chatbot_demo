@@ -4,7 +4,7 @@ Database service for storing chat sessions in MongoDB.
 
 from pymongo import MongoClient
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Union
 import logging
 import os
 from dotenv import load_dotenv
@@ -51,12 +51,13 @@ class DatabaseService:
             self.client.close()
             logger.info("MongoDB connection closed")
     
-    def save_chat_session(self, session_data: Dict[str, Any]) -> Optional[str]:
+    def save_chat_session(self, session_data_or_channel_id, session_data: Optional[Dict[str, Any]] = None) -> Optional[str]:
         """
-        Save a chat session to the database.
+        Save or update a chat session to the database using upsert.
         
         Args:
-            session_data: Dictionary containing session information
+            session_data_or_channel_id: Either session_data dict or channel_id string
+            session_data: Optional session data when first param is channel_id
             
         Returns:
             The upserted document ID as string, or None if failed
@@ -66,19 +67,24 @@ class DatabaseService:
                 logger.error("Not connected to database")
                 return None
             
-            # Add timestamp if not present
-            if 'created_at' not in session_data:
-                session_data['created_at'] = datetime.now()
+            # Handle both calling patterns
+            if isinstance(session_data_or_channel_id, dict):
+                # Called as save_chat_session(session_data)
+                final_session_data = session_data_or_channel_id
+                channel_id = final_session_data.get('channel_id')
+            else:
+                # Called as save_chat_session(channel_id, session_data)
+                channel_id = session_data_or_channel_id
+                final_session_data = session_data or {}
+                final_session_data['channel_id'] = channel_id
             
-            # Use channel_id as the unique identifier for upsert
-            channel_id = session_data.get('channel_id')
             if not channel_id:
                 logger.error("channel_id is required for upsert operation")
                 return None
             
             result = self.chat_sessions.update_one(
                 {"channel_id": channel_id},
-                {"$set": session_data},
+                {"$set": final_session_data},
                 upsert=True
             )
             
@@ -119,47 +125,7 @@ class DatabaseService:
         except Exception as e:
             logger.error(f"Failed to retrieve chat session: {e}")
             return None
-    
-    def update_session(self, channel_id: str, update_data: Dict[str, Any]) -> bool:
-        """
-        Update an existing chat session.
-        
-        Args:
-            channel_id: The channel ID to update
-            update_data: Dictionary containing fields to update
-            
-        Returns:
-            True if update was successful, False otherwise
-        """
-        try:
-            if self.chat_sessions is None:
-                logger.error("Not connected to database")
-                return False
-            
-            # Add update timestamp
-            update_data['updated_at'] = datetime.now()
-            
-            result = self.chat_sessions.update_one(
-                {"channel_id": channel_id},
-                {"$set": update_data},
-                upsert=True
-            )
-            
-            success = result.modified_count > 0 or result.upserted_id is not None
-            if success:
-                if result.upserted_id:
-                    logger.info(f"Channel {channel_id} created successfully")
-                else:
-                    logger.info(f"Channel {channel_id} updated successfully")
-            else:
-                logger.warning(f"No changes made to channel: {channel_id}")
-                
-            return success
-            
-        except Exception as e:
-            logger.error(f"Failed to update session: {e}")
-            return False
-    
+
     def get_session_stats(self) -> Dict[str, Any]:
         """
         Get basic statistics about chat sessions.

@@ -1,6 +1,6 @@
 mongo update zamiast insert || DONE
 chat min 3 eventy ale sprawdzamy i flaga DONE
-structured output + walidacja
-zestaw parametrów wyszukania i flaga w zwrotce (trzeba sprawdzi flage)
-obiekt ktory ma parametry wyszukiwania i flagi. zwracamy kilka obiektow w liscie
+structured output + walidacja DONE
+zestaw parametrów wyszukania i flaga w zwrotce (trzeba sprawdzi flage) PRAWIE DONE
+obiekt ktory ma parametry wyszukiwania i flagi. zwracamy kilka obiektow w liscie DONE
 przechowywanie raw odpowiedzi llma {events_found, obiekt z wyzej}

@@ -69,7 +69,7 @@ class Event(BaseModel):
         date_str = self.dates.start_date
         time_str = self.dates.start_time if self.dates.start_time else ""
         
-        return f"{self.name} at {venue_str} on {date_str} {time_str} - {self.url or ''}"
+        return f"{self.name} at {venue_str} on {date_str} {time_str} - {self.url or ''} [event ID: {self.id}]"
 
 class EventSearchResponse(BaseModel):
     """Response from the event search API."""
@@ -160,7 +160,6 @@ class EventApiService:
             raise ValueError(f"Unexpected error: {e}")
     
     def _extract_events_from_response(self, data: Dict[str, Any]) -> List[Event]:
-        print(f"Extracting events from data: {data}")
         """
         Extract events from API response data, handling different response formats.
         
@@ -276,7 +275,6 @@ class EventApiService:
             except Exception:
                 # Skip events that can't be processed
                 continue
-        print(events_data)
         return events_data
     
 def format_events_for_llm(events_response: EventSearchResponse) -> str:
@@ -295,8 +293,7 @@ def format_events_for_llm(events_response: EventSearchResponse) -> str:
     formatted_events = [event.format_summary() for event in events_response.events]
     
     result = f"Found {events_response.total_count} events. Showing {len(formatted_events)}:"
-    if events_response.found_more_events:
-        result += " (more events are available)"
+
     result += "\n\n"
     result += "\n".join(formatted_events)
     

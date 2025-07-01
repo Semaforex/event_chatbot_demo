@@ -3,6 +3,7 @@ from openai import OpenAI
 from typing import Dict, Any, Optional
 from structs.context import Context
 from structs.message import Message
+from structs.response_models import EventAgentResponse, EventAgentError
 from tools.event_search import EventSearchAPI
 from agents.memory_agent import MemoryAgent
 from tools.today_date import TodayDateTool
@@ -11,6 +12,7 @@ from pathlib import Path
 from services.event_api_service import format_events_for_llm, EventSearchResponse
 import json
 import re
+from pydantic import ValidationError
 
 class EventAgent(BaseAgent):
     def __init__(self, api_key: Optional[str] = None):
@@ -40,6 +42,12 @@ class EventAgent(BaseAgent):
         events_found = []
         context.add_message(message)
         
+        reminder_message = Message(
+            role="system",
+            content="Remember to always use the tools provided to search for events if the user asked for events in any way. Do not use events present in your context. Run the search again to avoid mistakes like events that are no longer in the database but still in your context",
+        )
+        context.add_message(reminder_message)
+        
         memory_summary = self.memory.get_summary()
         today_date = TodayDateTool().run({})
         date_msg = f"Today's date: {today_date}.\n"
@@ -58,20 +66,34 @@ class EventAgent(BaseAgent):
             completion = self.client.chat.completions.create(
                 model="gpt-4.1",
                 messages=messages_for_api,
-                tools=tools
+                tools=tools,
+                response_format={
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "event_agent_response",
+                        "schema": EventAgentResponse.model_json_schema(),
+                        "strict": True
+                    }
+                }
             )
             assistant_message = completion.choices[0].message
         except Exception as e:
             print(f"Error during OpenAI API call: {e}")
+            # Create structured error response
+            error_response = EventAgentError(
+                resp="I'm sorry, I encountered an error while processing your request.",
+                ids=[],
+                error_type=type(e).__name__
+            )
             context.add_message(
                 Message(
                     role="assistant",
-                    content="I'm sorry, I encountered an error while processing your request."
+                    content=error_response.resp
                 )
             )
-            self.memory.add_message(message, "Error processing request.")
+            self.memory.add_message(message, error_response.resp)
             self.memory.update_summary(self.memory_agent.summarize_memory(self.memory))
-            return {"context": context, "response": "Error processing request."}
+            return {"context": context, "response": error_response.resp, "events_found": [], "search_params": []}
         return_objects = []
         if hasattr(assistant_message, 'tool_calls') and assistant_message.tool_calls:
             for tool_call in assistant_message.tool_calls:
@@ -96,14 +118,14 @@ class EventAgent(BaseAgent):
                 if isinstance(result, str):
                     result = {"message": result}
                 elif isinstance(result, EventSearchResponse):
+                    return_object = {"params": getattr(tool_call.function, "arguments", ""), "found_more": len(events_found) > 3}
+                    return_objects.append(return_object)
                     if len(events_found) == 0:
-                        events_found = result.events
+                        events_found = [result.events]
                     else:
-                        return_object = {"params": getattr(tool_call.function, "arguments", ""), "found_more": len(events_found) > 3}
-                        return_objects.append(return_object)
-                        events_found.extend(result.events)
+                        events_found.append(result.events)
                     result = {"events": format_events_for_llm(result)}
-                    # appent listy obiektow 
+                    # appent listy obiektow  
                 context.add_message(
                     Message(
                         role="tool",
@@ -116,28 +138,51 @@ class EventAgent(BaseAgent):
             # Refresh messages for API
             messages_for_api = [{"role": "system", "content": enhanced_system_prompt.content}]
             messages_for_api.extend(context.messages_for_api())
+            # Save messages_for_api to a text file for debugging
+            with open("messages_for_api.txt", "w", encoding="utf-8") as f:
+                for msg in messages_for_api:
+                    f.write(json.dumps(msg, ensure_ascii=False) + "\n")
             
             completion = self.client.chat.completions.create(
                 model="gpt-4.1",
                 messages=messages_for_api,
-                tools=tools
+                tools=tools,
+                response_format={
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "event_agent_response",
+                        "schema": EventAgentResponse.model_json_schema(),
+                        "strict": True
+                    }
+                }
             )
             assistant_message = completion.choices[0].message
 
-        # Parse the assistant response as JSON according to system prompt format
+        # Parse and validate the assistant response using Pydantic model
         try:
-            assistant_response_dict = json.loads(assistant_message.content) if assistant_message.content else {"resp": ' ', "ids": []}
-        except (json.JSONDecodeError, TypeError):
-            # Fallback if response is not in expected JSON format
-            assistant_response_dict = {"resp": assistant_message.content or ' ', "ids": []}
-        
-        # Extract response text and IDs from the parsed dictionary
-        response = assistant_response_dict.get("resp", ' ')
-        ids_list = assistant_response_dict.get("ids", [])
-        
-        # Ensure ids_list is actually a list
-        if not isinstance(ids_list, list):
-            ids_list = []
+            if assistant_message.content:
+                # Parse JSON and validate with Pydantic
+                response_data = json.loads(assistant_message.content)
+                validated_response = EventAgentResponse(**response_data)
+                
+                response = validated_response.resp
+                ids_list = validated_response.ids
+            else:
+                # Fallback for empty content
+                validated_response = EventAgentResponse(resp="I'm sorry, I couldn't process your request.", ids=[])
+                response = validated_response.resp
+                ids_list = validated_response.ids
+                
+        except (json.JSONDecodeError, ValidationError, TypeError) as e:
+            print(f"Error parsing or validating response: {e}")
+            # Create error response using the error model
+            error_response = EventAgentError(
+                resp="I'm sorry, I encountered an error while processing your request. Please try again.",
+                ids=[],
+                error_type=type(e).__name__
+            )
+            response = error_response.resp
+            ids_list = error_response.ids
         
         context.add_message(
             Message(
@@ -146,15 +191,21 @@ class EventAgent(BaseAgent):
             )
         )
         
-        # Update memory with the user message and assistant response
         self.memory.add_message(message, response)
-        # Update memory summary
         self.memory.update_summary(self.memory_agent.summarize_memory(self.memory))
         
-        print(f"IDs extracted from response: {ids_list}")
+        print(f"\n IDs extracted from response: {ids_list} \n")
+        print(f"number of events found before filtering: {len(events_found)} \n")
         # Filter events_found to only include events whose id is in ids_list
         if ids_list and events_found:
-            events_found = [event for event in events_found if getattr(event, "id", None) in ids_list]
+            print(ids_list)
+            print([getattr(event, "id", None) for event in events_found])
+            final_events_found = []
+            for i, events in enumerate(events_found):
+                temp_events = [event for event in events if getattr(event, "id", None) in ids_list]
+                return_objects[i]["found_more"] = len(events) > 3 or len(temp_events) < len(events)
+                final_events_found.extend(temp_events)
+            events_found = final_events_found
         print(f"Events found after filtering: {events_found}")
         if len(return_objects) == 0:
             return {"context": context, "response": response, "events_found": [], "search_params": []}

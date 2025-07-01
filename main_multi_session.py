@@ -107,8 +107,9 @@ def create_new_channel():
     channel_data = {
         "channel_id": channel_id,
         "messages": [],
-        "created_at": datetime.now(),
         "last_updated": datetime.now(),
+        "last_search_obj_list": [],
+        "last_displayed_ids": [],
         "message_count": 0,
         "status": "active"
     }
@@ -157,7 +158,7 @@ def load_channel(channel_id: str):
         st.error(f"Failed to load channel: {e}")
         return False
 
-def save_current_channel():
+def save_current_channel(search_params: Optional[list] = None, events_found: Optional[list] = None, raw_context: Optional[Context] = None):
     """Save the current channel to database."""
     if not st.session_state.db_service or not st.session_state.current_channel_id:
         return
@@ -180,10 +181,15 @@ def save_current_channel():
             "messages": messages,
             "last_updated": datetime.now(),
             "message_count": len(messages),
-            "status": "active"
+            "status": "active",
+            "raw_context": raw_context.messages_for_api() if raw_context else None
         }
+        if search_params is not None:
+            update_data["last_search_obj_list"] = search_params
+        if events_found is not None:
+            update_data["last_displayed_ids"] = [event.id for event in events_found]
         
-        st.session_state.db_service.update_session(st.session_state.current_channel_id, update_data)
+        st.session_state.db_service.save_chat_session(st.session_state.current_channel_id, update_data)
         
         # Refresh channel list
         st.session_state.all_channels = load_all_channels()
@@ -280,6 +286,7 @@ def send_message():
     events_found = result.get("events_found", [])
     search_params = result.get("search_params", [])
     
+    
     # Optionally check the response with moderation API as well
     response_flagged = False
     if st.session_state.moderation_service:
@@ -315,9 +322,17 @@ def send_message():
     
     st.session_state.chat_history.append(("Assistant", assistant_message))
     st.session_state.user_input = ""
+    raw_context = result.get("context", Context())
     
     # Save channel after each message
-    save_current_channel()
+    if len(search_params) > 0 and len(events_found) > 0:
+        save_current_channel(search_params, events_found, raw_context)
+    elif len(search_params) > 0:
+        save_current_channel(search_params=search_params, raw_context=raw_context)
+    elif len(events_found) > 0:
+        save_current_channel(events_found=events_found, raw_context=raw_context)
+    else:
+        save_current_channel(raw_context=raw_context)
 
 def main():
     """Main application function."""
