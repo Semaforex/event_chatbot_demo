@@ -108,8 +108,8 @@ def create_new_channel():
         "channel_id": channel_id,
         "messages": [],
         "last_updated": datetime.now(),
-        "last_search_obj_list": [],
-        "last_displayed_ids": [],
+        "search_obj_list": [],
+        "displayed_ids": [],
         "message_count": 0,
         "status": "active"
     }
@@ -177,6 +177,8 @@ def save_current_channel(search_params: Optional[list] = None, events_found: Opt
                 if assistant_msg[0] == "Assistant":
                     messages.append({"role": "assistant", "content": assistant_msg[1]})
         
+        
+        
         update_data = {
             "messages": messages,
             "last_updated": datetime.now(),
@@ -184,10 +186,23 @@ def save_current_channel(search_params: Optional[list] = None, events_found: Opt
             "status": "active",
             "raw_context": raw_context.messages_for_api() if raw_context else None
         }
-        if search_params is not None:
-            update_data["last_search_obj_list"] = search_params
-        if events_found is not None:
-            update_data["last_displayed_ids"] = [event.id for event in events_found]
+        # Append new lists to the existing lists in the db (lists of lists)
+        if search_params is None:
+            search_params = []
+        prev_search_obj_list = []
+        if st.session_state.current_channel_id:
+            existing = st.session_state.db_service.get_chat_session(st.session_state.current_channel_id)
+            prev_search_obj_list = existing.get("search_obj_list", [])
+        # Always append as a list (to keep lists of lists)
+        update_data["search_obj_list"] = prev_search_obj_list + [search_params]
+        if events_found is None:
+            events_found = []
+        prev_displayed_ids = []
+        if st.session_state.current_channel_id:
+            existing = st.session_state.db_service.get_chat_session(st.session_state.current_channel_id)
+            prev_displayed_ids = existing.get("displayed_ids", [])
+        # Always append as a list (to keep lists of lists)
+        update_data["displayed_ids"] = prev_displayed_ids + [[event.id for event in events_found]]
         
         st.session_state.db_service.save_chat_session(st.session_state.current_channel_id, update_data)
         
