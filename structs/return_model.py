@@ -16,16 +16,14 @@ class ReturnSearchDetails(BaseModel):
 
 
 class Data(BaseModel):
-    display_ids: list[str]
     events_found: list[ReturnEvent]
     search_details: list[ReturnSearchDetails]
     
     @classmethod
     def to_dict(cls, instance: "Data") -> Dict[str, Any]:
         return {
-            "display_ids": instance.display_ids,
             "events_found": [event.to_dict() for event in instance.events_found],
-            "search_details": ReturnSearchDetails.to_dict(instance.search_details)
+            "search_details": [ReturnSearchDetails.to_dict(search) for search in instance.search_details]
         }
 
 

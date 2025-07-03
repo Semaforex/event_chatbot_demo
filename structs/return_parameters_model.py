@@ -49,12 +49,16 @@ class ReturnParameters:
         return changed
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert parameters to dictionary"""
-        return {
-            key: getattr(self, key)
-            for key in self.__annotations__
-            if getattr(self, key) is not None
-        }
+        """Convert parameters to dictionary, ensuring dates are strings"""
+        result = {}
+        for key in self.__annotations__:
+            value = getattr(self, key)
+            if value is not None:
+                if key in ("date_range_start", "date_range_end") and isinstance(value, datetime):
+                    result[key] = value.isoformat()
+                else:
+                    result[key] = value
+        return result
 
     def from_dict(self, data: dict) -> "ReturnParameters":
         return ReturnParameters(

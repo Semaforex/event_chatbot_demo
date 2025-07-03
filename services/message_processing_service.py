@@ -1,6 +1,6 @@
 from typing import Optional, Any
 import logging
-
+import json
 from structs.return_model import ReturnModel, Data, ReturnSearchDetails
 from structs.return_event_model import ReturnEvent
 from structs.return_parameters_model import ReturnParameters
@@ -116,18 +116,33 @@ def process_result(response: dict[str, Any], chat_id: str) -> Optional[ReturnMod
     if not ai_response or not last_raw_context:
         return None
 
+    search_details = []
+    for search in search_params:
+        try:
+            # Parse the params string if it's a JSON string
+            params_data = search.get("params", "{}")
+            if isinstance(params_data, str):
+                params_dict = json.loads(params_data)
+            else:
+                params_dict = params_data if params_data else {}
+            
+            search_details.append(
+                ReturnSearchDetails(
+                    found_more_events=search.get("found_more", False),
+                    parameters=ReturnParameters.from_event_search_params(EventSearchParams(**params_dict))
+                )
+            )
+        except (json.JSONDecodeError, TypeError, ValueError) as e:
+            logger.warning(f"Failed to parse search params: {e}")
+            # Skip this search detail if parsing fails
+            continue
+
     return ReturnModel(
         ai_response=ai_response,
         chat_id=chat_id,
         data=Data(
-            display_ids=response.get("display_ids", []),
             events_found=[ReturnEvent.from_event(event) for event in events_found],
-            search_details = [
-                ReturnSearchDetails(
-                    found_more_events=search.get("found_more", False),
-                    parameters=ReturnParameters.from_event_search_params(EventSearchParams(**search.get("params", {})))
-                ) for search in search_params
-            ]
+            search_details=search_details
         )
     )
 
@@ -142,8 +157,7 @@ def get_updated_data(channel_data: dict, response: dict, user_msg: str) -> dict:
         "content": response.get("response", "")
     })
     updated_data["message_count"] = len(updated_data["messages"])
-    updated_data["last_updated"] = datetime.datetime.now().isoformat()  
+    updated_data["last_updated"] = str(datetime.datetime.now())
     updated_data["raw_context"] = response.get("context", {}).messages_for_api()
-    updated_data["displayed_ids"].append(response.get("display_ids", []))
     updated_data["search_obj_list"].append(response.get("search_params", []))
     return channel_data

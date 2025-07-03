@@ -126,13 +126,13 @@ class DatabaseService:
                 logger.info(f"Session not found for channel {channel_id}, creating new session")
                 
                 # Create new session data
+                now_str = datetime.now().isoformat()
                 new_session_data = {
                     "channel_id": channel_id,
                     "messages": [],
-                    "created_at": datetime.now(),
-                    "last_updated": datetime.now(),
+                    "created_at": now_str,
+                    "last_updated": now_str,
                     "search_obj_list": [],
-                    "displayed_ids": [],
                     "message_count": 0,
                     "status": "active"
                 }
@@ -153,39 +153,6 @@ class DatabaseService:
             logger.error(f"Failed to retrieve chat session: {e}")
             return None
 
-    def get_session_stats(self) -> Dict[str, Any]:
-        """
-        Get basic statistics about chat sessions.
-        
-        Returns:
-            Dictionary containing session statistics
-        """
-        try:
-            if self.chat_sessions is None or self.db is None:
-                logger.error("Not connected to database")
-                return {}
-            
-            total_sessions = self.chat_sessions.count_documents({})
-            
-            # Get sessions from last 24 hours
-            yesterday = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-            recent_sessions = self.chat_sessions.count_documents({
-                "created_at": {"$gte": yesterday}
-            })
-            
-            stats = {
-                "total_sessions": total_sessions,
-                "sessions_today": recent_sessions,
-                "collection_name": self.chat_sessions.name,
-                "database_name": self.db.name
-            }
-            
-            return stats
-            
-        except Exception as e:
-            logger.error(f"Failed to get session stats: {e}")
-            return {}
-    
     def get_all_sessions(self, limit: int = 50) -> List[Dict[str, Any]]:
         """
         Get all chat sessions/channels from the database.
@@ -224,38 +191,3 @@ class DatabaseContext:
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.db_service.disconnect()
-
-# Example usage function
-def example_usage():
-    """Example of how to use the database service."""
-    
-    # Using context manager (recommended)
-    try:
-        with DatabaseContext() as db:
-            # Save a channel
-            channel_data = {
-                "channel_id": "example_channel_123",
-                "messages": [
-                    {"role": "user", "content": "Hello"},
-                    {"role": "assistant", "content": "Hi there!"}
-                ],
-                "duration_minutes": 5,
-                "event_searches": 2
-            }
-            
-            doc_id = db.save_chat_session(channel_data)
-            print(f"Saved channel: {doc_id}")
-            
-            # Get session stats
-            stats = db.get_session_stats()
-            print(f"Database stats: {stats}")
-            
-            # Get all channels
-            all_channels = db.get_all_sessions()
-            print(f"All channels: {len(all_channels)}")
-            
-    except Exception as e:
-        print(f"Database operation failed: {e}")
-
-if __name__ == "__main__":
-    example_usage()
