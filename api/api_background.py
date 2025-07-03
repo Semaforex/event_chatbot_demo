@@ -8,10 +8,11 @@ import asyncio
 import logging
 import httpx
 import os
+from typing import Any
 
 logger = logging.getLogger("api_background")
 
-async def send_webhook_response(webhook_url: str, api_response: ReturnModel):
+async def send_webhook_response(webhook_url: str, api_response: dict[str, Any]):
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(webhook_url, json=api_response)
@@ -34,5 +35,5 @@ async def process_chat_message(input: ChatMessageDto):
 
     await send_webhook_response(
         os.getenv("WEBHOOK_URL") or "",
-        result
+        ReturnModel.to_dict(result)
     )

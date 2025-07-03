@@ -13,6 +13,7 @@ from structs.message import Message
 from structs.event_related_models import EventSearchParams
 
 import datetime
+logger = logging.getLogger("message_processing_service")
 
 def process_message_service(input: ChatMessageDto) -> ReturnModel:
     user_input = input.message
@@ -21,21 +22,25 @@ def process_message_service(input: ChatMessageDto) -> ReturnModel:
     # moderation
     moderation_service = get_moderation_service()
     if moderation_service:
-        is_safe = moderation_service.is_flagged(user_input)
-        if not is_safe:
+        is_flagged = moderation_service.is_flagged(user_input)
+        if is_flagged:
+            logging.warning(f"Message flagged as unsafe: {user_input}")
             return fail_response(channel_id)
     
     # database
     db_service = get_database_service()
     if not db_service:
+        logging.error("Database service is not available.")
         return fail_response(channel_id)
     channel_data = db_service.get_chat_session(channel_id)
     if not channel_data:
+        logging.error(f"Channel data not found for channel_id: {channel_id}")
         return fail_response(channel_id)
     
     # agent and context
     event_agent = get_event_agent()
     if not event_agent:
+        logging.error("EventAgent is not available.")
         return fail_response(channel_id)
     context = get_context(channel_data)
     
@@ -44,6 +49,7 @@ def process_message_service(input: ChatMessageDto) -> ReturnModel:
     result = event_agent.process(user_message, context)
     return_object = process_result(result, channel_id)
     if not return_object:
+        logging.error(f"Failed to process result for channel_id: {channel_id}")
         return fail_response(channel_id)
     
     # save the updated context
