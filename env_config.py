@@ -51,3 +51,4 @@ def get_moderation_api_key() -> Optional[str]:
         api_key = get_openai_api_key()
     
     return api_key
+

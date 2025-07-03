@@ -4,3 +4,34 @@ structured output + walidacja DONE
 zestaw parametrów wyszukania i flaga w zwrotce (trzeba sprawdzi flage) PRAWIE DONE
 obiekt ktory ma parametry wyszukiwania i flagi. zwracamy kilka obiektow w liscie DONE
 przechowywanie raw odpowiedzi llma {events_found, obiekt z wyzej}
+
+
+
+brak moderacji na wyjsciu+tylko send message + wyczyscic api od chata + moderacja przed inicjalizacja sesji| 2 -> 2h
+tworzenie session przy wysylaniu pierwszej wiadomosci (otzrymuje channel id) | 2 -> 2h
+
+logika moderacji poza api_service (service do komunikacji z openai, service z logiką moderacji) | 3 -> 4h
+wydzielenie processignu wiadomosci do serwisu (ten sam streamlit i api) | 4 -> 6h
+
+!! input -> walidacja --> output OK/NIEOK
+
+[background] OK --> moderacja (NIEOK ? output wiadomosc zwrotna output na chat) --> processing --> output na chat
+
+potrzebuje pliku do backgrounda (msg_processing.py) [fastapi background task] | 3 -> 3h
+
+port adatpter zeby mapowac modele zewnetrzne na wewnetrzne i odwrotnie + model zwrotki | 2 -> 3h
+
+webhook.site 
+
+
+
+{
+"ai_response" : str,
+"chat_id" : str,
+"data: : {
+    "display_ids" : list[str],
+    "events_found" : list[{model z models/event.py}],
+    "parameters: : list[{model z models/parameters.py}]
+}
+}
+

@@ -106,13 +106,13 @@ class DatabaseService:
     
     def get_chat_session(self, channel_id: str) -> Optional[Dict[str, Any]]:
         """
-        Retrieve a chat session by channel ID.
+        Retrieve a chat session by channel ID. If no session exists, create a new one.
         
         Args:
             channel_id: The channel ID to search for
             
         Returns:
-            The session document or None if not found
+            The session document or None if failed
         """
         try:
             if self.chat_sessions is None:
@@ -120,6 +120,33 @@ class DatabaseService:
                 return None
             
             session = self.chat_sessions.find_one({"channel_id": channel_id})
+            
+            # If session doesn't exist, create a new one
+            if session is None:
+                logger.info(f"Session not found for channel {channel_id}, creating new session")
+                
+                # Create new session data
+                new_session_data = {
+                    "channel_id": channel_id,
+                    "messages": [],
+                    "created_at": datetime.now(),
+                    "last_updated": datetime.now(),
+                    "search_obj_list": [],
+                    "displayed_ids": [],
+                    "message_count": 0,
+                    "status": "active"
+                }
+                
+                # Save the new session
+                doc_id = self.save_chat_session(new_session_data)
+                if doc_id:
+                    # Retrieve the newly created session
+                    session = self.chat_sessions.find_one({"channel_id": channel_id})
+                    logger.info(f"Created and retrieved new session for channel: {channel_id}")
+                else:
+                    logger.error(f"Failed to create new session for channel: {channel_id}")
+                    return None
+            
             return session
             
         except Exception as e:
@@ -178,6 +205,7 @@ class DatabaseService:
             return sessions
             
         except Exception as e:
+            #fallback
             logger.error(f"Failed to retrieve all sessions: {e}")
             return []
 
