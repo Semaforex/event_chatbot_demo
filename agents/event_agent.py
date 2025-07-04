@@ -197,7 +197,7 @@ class EventAgent(BaseAgent):
         print(f"\n IDs extracted from response: {ids_list} \n")
         print(f"number of events found before filtering: {len(events_found)} \n")
         # Filter events_found to only include events whose id is in ids_list
-        if ids_list and events_found:
+        if len(ids_list) > 0 and len(events_found) > 0:
             print(ids_list)
             print([getattr(event, "id", None) for event in events_found])
             final_events_found = []
@@ -206,6 +206,8 @@ class EventAgent(BaseAgent):
                 return_objects[i]["found_more"] = len(events) > 3 or len(temp_events) < len(events)
                 final_events_found.extend(temp_events)
             events_found = final_events_found
+        else:
+            events_found = []
         print(f"Events found after filtering: {events_found}")
         if len(return_objects) == 0:
             return {"context": context, "response": response, "events_found": [], "search_params": []}
