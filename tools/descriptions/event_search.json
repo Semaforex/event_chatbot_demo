@@ -2,7 +2,7 @@
     "type": "function",
     "function": {
         "name": "search_events",
-        "description": "Finds a list of events based on filters. Returns event details including name, description, image, URL, start date/time, and venues.",
+        "description": "Finds a list of events based on filters. Returns event details including name, description, image, URL, start date/time, and venues. Parameters in english!",
         "parameters": {
             "type": "object",
             "properties": {

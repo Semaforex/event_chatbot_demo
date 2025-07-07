@@ -52,3 +52,13 @@ def get_moderation_api_key() -> Optional[str]:
     
     return api_key
 
+def get_geocode_api_key() -> str:
+    """Get the Google Geocoding API key from environment variables or config."""
+    api_key = os.environ.get("GEOCODE_API_KEY")
+    if not api_key and "GEOCODE_API_KEY" in CONFIG:
+        api_key = CONFIG["GEOCODE_API_KEY"]
+        warnings.warn("Using GEOCODE_API_KEY from config.py instead of environment variable", UserWarning)
+    if not api_key:
+        raise EnvironmentError("GEOCODE_API_KEY not found in environment variables or config.py")
+    return api_key
+

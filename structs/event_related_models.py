@@ -43,6 +43,7 @@ class Event(BaseModel):
     venues: List[Venue] = Field(default_factory=list, description="List of venues")
     images: List[EventImage] = Field(default_factory=list, description="List of event images")
     genre: Optional[str] = Field(None, description="Genre of the event")
+    timezone: Optional[str] = Field(None, description="Timezone of the event location")
     
     def format_summary(self) -> str:
         """Format the event as a summary string."""
@@ -59,7 +60,7 @@ class Event(BaseModel):
         date_str = self.dates.start_date
         time_str = self.dates.start_time if self.dates.start_time else ""
         
-        return f"{self.name} at {venue_str} on {date_str} {time_str} - {self.url or ''} [event ID: {self.id}]"
+        return f"{self.name} at {venue_str} on {date_str} {time_str} - {self.url or ''} {f"(time zone: {self.timezone})" if self.timezone else ''} [event ID: {self.id}]"
 
 class EventSearchResponse(BaseModel):
     """Response from the event search API."""

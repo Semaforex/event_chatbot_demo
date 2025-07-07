@@ -8,10 +8,10 @@ przechowywanie raw odpowiedzi llma {events_found, obiekt z wyzej}
 
 
 brak moderacji na wyjsciu+tylko send message + wyczyscic api od chata + moderacja przed inicjalizacja sesji| 2 -> 2h
-tworzenie session przy wysylaniu pierwszej wiadomosci (otzrymuje channel id) | 2 -> 2h
+tworzenie session przy wysylaniu pierwszej wiadomosci (otzrymuje channel id) | 2 -> 2h | DONE
 
 logika moderacji poza api_service (service do komunikacji z openai, service z logiką moderacji) | 3 -> 4h
-wydzielenie processignu wiadomosci do serwisu (ten sam streamlit i api) | 4 -> 6h
+wydzielenie processignu wiadomosci do serwisu (ten sam streamlit i api) | 4 -> 6h | Chyba DONE
 
 !! input -> walidacja --> output OK/NIEOK
 
@@ -35,3 +35,12 @@ webhook.site
 }
 }
 
+
+
+
+
+
+7.07:
+
+sprawdzic w dockasch mongoclient czy inicjalizacja clienat jest natywnie singletonem
+(refactoring.guru)

@@ -6,13 +6,17 @@ It uses Pydantic models for request and response validation.
 """
 
 import requests
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime
-from env_config import get_swagger_api_key
+from env_config import get_swagger_api_key, get_geocode_api_key
+from timezonefinder import TimezoneFinder
+from services.geocode_api_service import geocode_address
+
 
 from structs.event_related_models import Venue, Event, EventDate, EventImage, EventSearchResponse, EventSearchParams
 
 BASE_URL = "https://event-search-staging.thrugo.com/api/events"
+
 
 
 class EventApiService:
@@ -163,7 +167,10 @@ class EventApiService:
                         images.append(EventImage(url=image_url, alt=None))
                 
                 # Create Event object
+                # timezone = get_timezone(venues[0])
+                timezone = event_data.get("timezone", None)
                 event = Event(
+                    timezone=timezone,
                     id=str(event_data.get("id", "")),
                     name=event_data.get("name", "Unknown Event"),
                     description=event_data.get("description"),
@@ -178,7 +185,8 @@ class EventApiService:
                 )
                 
                 events_data.append(event)
-            except Exception:
+            except Exception as e:
+                print(f"Error processing event data: {e}")
                 # Skip events that can't be processed
                 continue
         return events_data
@@ -204,3 +212,26 @@ def format_events_for_llm(events_response: EventSearchResponse) -> str:
     result += "\n".join(formatted_events)
     
     return result
+
+def get_timezone(venue: Venue) -> Optional[str]:
+    timezone = None
+    if venue.address:
+        v = venue.address
+    elif venue.city:
+        v = venue.city
+    elif venue.name:
+        v = venue.name
+    elif venue.country:
+        v = venue.country
+    else:
+        v = str(venue)
+    if v:
+        try:
+            location = geocode_address(v, get_geocode_api_key())
+            tff = TimezoneFinder()
+            timezone = tff.timezone_at(lat=location.latitude, lng=location.longitude)
+        except Exception:
+            return None
+    return timezone
+
+

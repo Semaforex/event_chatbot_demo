@@ -76,7 +76,7 @@ class ReturnEvent:
             image=event.images[0].url if event.images else None,
             description=event.description,
             start_date_time=event.dates.start_date + " " + (event.dates.start_time or ""),
-            timezone=None,  # Assuming timezone is not available in Event model
-            url=event.url,
+            timezone=event.timezone if event.timezone else None,
+            url=event.url if event.url else None,
             venue=event.venues[0].name if event.venues else None,
         )
