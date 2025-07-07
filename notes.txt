@@ -44,3 +44,5 @@ webhook.site
 
 sprawdzic w dockasch mongoclient czy inicjalizacja clienat jest natywnie singletonem
 (refactoring.guru)
+
+dostep do repo, link, envy na slacku
