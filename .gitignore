@@ -20,5 +20,5 @@ venv/
 *.sqlite3
 *.db
 config.py
-./messages_for_api.txt
+messages_for_api.txt
 **/__pycache__/

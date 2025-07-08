@@ -15,6 +15,10 @@ from structs.event_related_models import EventSearchParams
 import datetime
 logger = logging.getLogger("message_processing_service")
 
+# Module-level singletons - created once when module is imported
+_cached_db_service: Optional[DatabaseService] = None
+_cached_moderation_service: Optional[ModerationService] = None
+
 def process_message_service(input: ChatMessageDto) -> ReturnModel:
     user_input = input.message
     channel_id = input.chat_id
@@ -58,9 +62,7 @@ def process_message_service(input: ChatMessageDto) -> ReturnModel:
     
     # return the response
     return return_object
-    
-    
-    
+
 def fail_response(chat_id: str) -> ReturnModel:
     return ReturnModel(
         ai_response="I'm sorry, I cannot process your request at the moment.",
@@ -68,27 +70,40 @@ def fail_response(chat_id: str) -> ReturnModel:
     )
 
 def get_moderation_service() -> Optional[ModerationService]:
-    """Dependency to get moderation service (optional)."""
-    try:
-        moderation_service = ModerationService()
-    except Exception as e:
-        moderation_service = None
-        logging.error(f"Failed to initialize ModerationService: {e}")
-    return moderation_service
+    """Get cached moderation service (singleton)."""
+    global _cached_moderation_service
+    
+    if _cached_moderation_service is None:
+        try:
+            _cached_moderation_service = ModerationService()
+            logger.info("Moderation service initialized and cached")
+        except Exception as e:
+            logger.error(f"Failed to initialize ModerationService: {e}")
+            return None
+    
+    return _cached_moderation_service
 
 def get_database_service() -> Optional[DatabaseService]:
-    """Dependency to get database service."""
-    try:
-        db_service = DatabaseService()
-        if not db_service.connect():
-            logging.error("Failed to connect to the database.")
+    """Get cached database service (singleton)."""
+    global _cached_db_service
+    
+    if _cached_db_service is None:
+        try:
+            _cached_db_service = DatabaseService()
+            if not _cached_db_service.connect():
+                logger.error("Failed to connect to the database.")
+                _cached_db_service = None
+                return None
+            logger.info("Database service initialized and cached")
+        except Exception as e:
+            logger.error(f"Failed to initialize DatabaseService: {e}")
+            _cached_db_service = None
             return None
-    except Exception as e:
-        logging.error(f"Failed to initialize DatabaseService: {e}")
-        return None
-    return db_service
+    
+    return _cached_db_service
 
 def get_event_agent() -> Optional[EventAgent]:
+    """Create new EventAgent instance (these should be created per request due to state)."""
     try:
         event_agent = EventAgent()
     except Exception as e:

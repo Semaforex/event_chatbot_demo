@@ -14,25 +14,49 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
+_mongo_client = None
+_mongo_url = None
+
+def get_mongo_client() -> MongoClient:
+    global _mongo_client, _mongo_url
+    
+    if _mongo_client is None:
+        _mongo_url = os.getenv('MONGO_URL')
+        if not _mongo_url:
+            raise ValueError("MONGO_URL environment variable is not set")
+        
+        _mongo_client = MongoClient(_mongo_url)
+        logger.info("MongoDB client initialized")
+    
+    return _mongo_client
+
+def close_mongo_client():
+    global _mongo_client
+    if _mongo_client:
+        _mongo_client.close()
+        logger.info("MongoDB client closed")
+        _mongo_client = None
+
 class DatabaseService:
     """Service for managing MongoDB connections and chat session storage."""
     
-    def __init__(self, mongo_url: Optional[str] = None):
+    #temp for testing sigleton
+    _instance = None
+    
+    def __init__(self):
         """Initialize the database service."""
-        self.mongo_url = mongo_url or os.getenv('MONGO_URL')
         self.client = None
         self.db = None
         self.chat_sessions = None
+        if DatabaseService._instance is not None:
+            logger.warning("DatabaseService instance already exists, using singleton pattern")
+        else:
+            DatabaseService._instance = self
         
-        if not self.mongo_url:
-            raise ValueError("MONGO_URL must be provided either as parameter or environment variable")
-    
     def connect(self) -> bool:
         """Connect to MongoDB."""
         try:
-            self.client = MongoClient(self.mongo_url)
-            # Test the connection
-            self.client.admin.command('ping')
+            self.client = get_mongo_client()
             
             # Initialize database and collections
             self.db = self.client['Thrugo']
@@ -46,10 +70,10 @@ class DatabaseService:
             return False
     
     def disconnect(self):
-        """Close MongoDB connection."""
-        if self.client:
-            self.client.close()
-            logger.info("MongoDB connection closed")
+        self.client = None
+        self.db = None
+        self.chat_sessions = None
+        
     
     def save_chat_session(self, session_data_or_channel_id, session_data: Optional[Dict[str, Any]] = None) -> Optional[str]:
         """
@@ -181,7 +205,7 @@ class DatabaseContext:
     """Context manager for database operations."""
     
     def __init__(self, mongo_url: Optional[str] = None):
-        self.db_service = DatabaseService(mongo_url)
+        self.db_service = DatabaseService()
     
     def __enter__(self):
         if self.db_service.connect():
